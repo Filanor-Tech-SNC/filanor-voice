@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Write(docs/JOURNAL.md)",
+      "Write(docs/ANTI_PATTERNS.md)",
+      "Edit(docs/DECISIONS.md)",
+      "Bash(pnpm *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ],
+    "ask": [
+      "Write(**)",
+      "Edit(**)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(supabase db push)",
+      "Bash(vercel *)",
+      "Bash(curl *)"
+    ],
+    "deny": [
+      "Write(.env.local)",
+      "Write(.env)",
+      "Bash(rm -rf *)",
+      "Bash(git reset --hard *)"
+    ]
+  }
+}

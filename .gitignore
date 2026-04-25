@@ -1,0 +1,51 @@
+# deps
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+build
+
+# env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# supabase
+supabase/.branches
+supabase/.temp
+
+# claude
+.claude/cache/
+.claude/*.local.*
+
+# misc
+.idea/
+.vscode/
+*.swp
+*.swo

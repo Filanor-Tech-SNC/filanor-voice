@@ -1,0 +1,25 @@
+{
+  "name": "filanor-voice",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Assistant téléphonique IA pour PME de Suisse romande",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @filanor/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "supabase:start": "supabase start",
+    "supabase:migrate": "supabase db push",
+    "supabase:types": "supabase gen types typescript --local > packages/supabase-types/index.ts",
+    "provision-tenant": "tsx scripts/provision-tenant.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}
