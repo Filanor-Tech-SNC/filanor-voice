@@ -146,13 +146,13 @@ TWILIO_ADDRESS_SID=             ← Regulatory Compliance → Addresses → Addr
 
 ---
 
-## 2. GitHub — Organisation `filanor-tech`
+## 2. GitHub — Organisation `Filanor-Tech-SNC`
 
 ### 2.1 Création de l'org
 
 - [ ] Aller sur https://github.com/organizations/new
 - [ ] Plan : **Free** (cf. `docs/COSTS.md` — repos privés illimités + 2000 min Actions / mois)
-- [ ] Organization account name : `filanor-tech` (exact, minuscules, avec tiret)
+- [ ] Organization account name : `Filanor-Tech-SNC` (exact, casse mixte avec tirets — slug case-sensitive sur l'API GitHub)
 - [ ] Contact email : `contact@filanor.ch`
 - [ ] This organization belongs to : **a business or institution**
 - [ ] Business name : `Filanor Tech SNC`
@@ -171,7 +171,7 @@ Les secrets GitHub Actions (quand on en aura) sont gérés au niveau repo/org di
 
 ### Pièges GitHub
 
-- **Nom d'org déjà pris** : `filanor-tech` peut être squatté. Fallbacks : `filanor`, `filanor-ch`, `filanor-voice`. [FILIP À CONFIRMER nom retenu après check]
+- **Nom d'org** : `Filanor-Tech-SNC` (créée). Slug case-sensitive sur l'API GitHub CLI — utiliser exactement cette casse dans toutes les commandes `gh`.
 - **Passage Free → Team** (4 USD/user/mois) plus tard pour SSO/audit log, pas au MVP.
 
 ---
@@ -211,7 +211,7 @@ L'email pro sert surtout à recevoir les emails de validation des autres service
 ### 4.1 Création du compte
 
 - [ ] Aller sur https://supabase.com/dashboard/sign-up
-- [ ] Option **Sign up with GitHub** (utiliser le compte Filip qui sera owner de `filanor-tech`) ou email `contact@filanor.ch`
+- [ ] Option **Sign up with GitHub** (utiliser le compte Filip qui sera owner de `Filanor-Tech-SNC`) ou email `contact@filanor.ch`
 - [ ] Validation email
 
 ### 4.2 Créer l'organisation
@@ -390,7 +390,7 @@ Je mettrai à jour ce doc le moment venu (Jour 5 ou 6).
 - [ ] Twilio
 - [ ] OpenAI (+ ZDR approuvé par email)
 - [ ] Supabase
-- [ ] Vercel (à vérifier au niveau org `filanor-tech`, peut déjà être signé côté perso Filip)
+- [ ] Vercel (à vérifier au niveau org `Filanor-Tech-SNC`, peut déjà être signé côté perso Filip)
 
 ⚠️ **Aucun client payant onboardé avant que ces 5 DPA soient signés et classés** dans `docs/compliance/dpa/` (dossier à créer).
 
@@ -412,7 +412,7 @@ Au bout de 7 jours d'utilisation réelle, ré-ouvrir `docs/COSTS.md` et ajuster 
 | Service | Dashboard | Docs | Support |
 |---------|-----------|------|---------|
 | Twilio | https://console.twilio.com | https://www.twilio.com/docs | help@twilio.com |
-| GitHub | https://github.com/filanor-tech (après création) | https://docs.github.com | — |
+| GitHub | https://github.com/Filanor-Tech-SNC | https://docs.github.com | — |
 | Infomaniak | https://manager.infomaniak.com | https://www.infomaniak.com/fr/support | — |
 | Supabase | https://supabase.com/dashboard | https://supabase.com/docs | support@supabase.io |
 | Retell AI | https://dashboard.retellai.com | https://docs.retellai.com | support@retellai.com |

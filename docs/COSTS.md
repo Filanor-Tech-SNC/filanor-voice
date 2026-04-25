@@ -13,7 +13,7 @@ Statuts : `actif` (créé et payant) · `prévu` (à créer dans les jours à ve
 |---------|------|--------------|--------|-------|
 | Supabase | Free | 0 CHF | prévu Jour 1 | Pro 25 USD/mo dès 1er pilote signé (ADR-012) |
 | Vercel | Hobby | 0 CHF | actif (compte Filip) | partagé avec filanor.ch, app.filanor.ch ajouté en S1 |
-| GitHub | Organization Free | 0 CHF | prévu Jour 1 | org `filanor-tech` à créer. Repos privés illimités + 2000 min Actions CI/CD / mois |
+| GitHub | Organization Free | 0 CHF | actif | org `Filanor-Tech-SNC` créée. Repos privés illimités + 2000 min Actions CI/CD / mois |
 | Twilio | pay-as-you-go | ~2 CHF/mo | prévu Jour 3 | 2 numéros +41 démo (Sophie, Marc) à ~1 CHF/mois chacun |
 | Retell AI | pay-as-you-go | ~8 CHF/mo | prévu Jour 1 | phase dev estimée 50 min/mois × ~0.15 CHF coût réel |
 | OpenAI | pay-as-you-go | ~2 CHF/mo | prévu Jour 1 | GPT-4o mini, volume dev |
