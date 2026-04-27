@@ -58,7 +58,7 @@ C:\Filanor\credentials-temp.txt       ← fichier plat, format "SERVICE_KEY: val
 
 | Ordre | Service | Pourquoi ce rang | Temps actif | Attente |
 |-------|---------|------------------|-------------|---------|
-| 1 | **Twilio** (KYC) | Validation KYC = 1-2 jours ouvrés, à lancer en premier | 20 min | **1-2 jours** |
+| 1 | **Twilio** (KYC) | ✓ Approved 2026-04-25 — Bundle SID en §1.6 | 20 min | **fait** |
 | 2 | **GitHub org** | 5 min, débloque `git init` (ÉTAPE D) | 5 min | 0 |
 | 3 | **Infomaniak email** | Vérifier que `contact@filanor.ch` existe/fonctionne | 5 min | 0 |
 | 4 | **Supabase** | Critique Jour 1 (migration 0001) | 10 min | 0 |
@@ -71,7 +71,11 @@ C:\Filanor\credentials-temp.txt       ← fichier plat, format "SERVICE_KEY: val
 
 ---
 
-## 1. Twilio — KYC + téléphonie (À FAIRE EN PREMIER)
+## 1. Twilio — KYC + téléphonie
+
+> **Status KYC : APPROVED (2026-04-25)** — Bundle "Filanor Voice — CH Local Business"
+> `TWILIO_REGULATORY_BUNDLE_SID=BU8915423173a55add249d07b0c731e20a`
+> Achat des 2 numéros démo Sophie + Marc débloqué côté Twilio. Reste l'attente CB pro PostFinance avant de tirer les numéros (cf. JOURNAL 2026-04-25).
 
 ### 1.1 Création du compte
 
@@ -128,7 +132,7 @@ TWILIO_DEFAULT_CALLER_ID=+41...  ← laisser vide au MVP, rempli dès achat du 1
 Variables non présentes dans `.env.example` mais à noter dès maintenant pour le provisioning :
 
 ```
-TWILIO_REGULATORY_BUNDLE_SID=   ← Regulatory Compliance → Business Profile → Bundle SID (BU...)
+TWILIO_REGULATORY_BUNDLE_SID=BU8915423173a55add249d07b0c731e20a   ← Approved 2026-04-25
 TWILIO_ADDRESS_SID=             ← Regulatory Compliance → Addresses → Address SID (AD...)
 ```
 
@@ -399,7 +403,7 @@ Je mettrai à jour ce doc le moment venu (Jour 5 ou 6).
 - [ ] `curl https://api.retellai.com/v2/list-agents -H "Authorization: Bearer $RETELL_API_KEY"` → doit retourner `[]` ou une liste (pas 401)
 - [ ] `curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"` → doit retourner une liste de modèles
 - [ ] Supabase → dashboard projet ouvert, migration 0001 pas encore appliquée (normal)
-- [ ] Twilio → Business Profile status = **Approved** (sinon attendre)
+- [x] Twilio → Business Profile status = **Approved (2026-04-25)** ✓
 
 ### Mise à jour du dashboard de suivi coûts
 

@@ -216,3 +216,115 @@ Volontairement non bloquant. Mode opératoire change : on accélère vers du con
 - "Confondre les 3 géographies Filanor"
 
 ---
+
+## 2026-04-27 · 17h15 · Filip + Claude (Opus 4.7) · Session — First Working Endpoint
+
+### Ce qui a été fait
+
+**Étapes 1-8 du plan défini en JOURNAL 2026-04-25 § "Session FIRST WORKING ENDPOINT" — toutes ✓**
+
+1. ✓ `git init` racine + 1er commit `chore: bootstrap initial` (sha `c349bba`).
+2. ✓ Repo GitHub `Filanor-Tech-SNC/filanor-voice` créé + push initial. Slug org confirmé `Filanor-Tech-SNC` (case-sensitive sur API GitHub) — commit `1256e3f docs: update GitHub org slug to Filanor-Tech-SNC`.
+3. ✓ Node 20 + pnpm 9 vérifiés. `.nvmrc` précisé à `20.18.0`.
+4. ✓ `pnpm install` racine OK, `pnpm-lock.yaml` versionné.
+5. ✓ `apps/web` scaffold via `pnpm create next-app` → **Next.js 16.2.4** (pas 15 comme prévu — c'est la version stable courante au 2026-04-27, propage Next 16 dans tous les docs : CLAUDE.md, README.md, STACK.md, ARCHITECTURE.md, apps/web/README.md). `package.json` workspace renommé `@filanor/web`. Note added re. `apps/web/AGENTS.md` (livré officiellement par Vercel avec Next 16, doit être lu avant tout code Next car les LLM ont des données d'entraînement souvent obsolètes vs l'API Next 16).
+6. ✓ Hello world local OK.
+7. ✓ Endpoint `apps/web/app/api/retell/dynamic-variables/route.ts` créé : handlers POST + GET, log structuré JSON par hit, hardcoded `dynamic_variables` Sophie / Hair In The City (variables alignées sur `docs/PROMPTS/SECTOR_SALON.md` + `SYSTEM_PROMPT_UNIVERSAL.md`). Pas de Supabase, pas de signature Retell.
+8. ✓ Test local curl OK.
+
+**Étapes 9-10 (tranche assistée Claude Opus 4.7 1M, ce jour)**
+
+9. ✓ Vercel link existant : projet `prj_PBQYD1lnXrfLZNTOZTxhNCRVcNkh` sous le compte perso `fkuleshov01-cpus-projects` (cf. COSTS.md item "Vercel Pro Team" = future migration).
+   - 1er `vercel deploy` fait précédemment **bloqué par Vercel Authentication (SSO)** sur le projet — la URL preview retournait l'écran d'auth Vercel à tout visiteur non-loggé, donc inutilisable comme webhook public.
+   - **Bonus accidentel constaté** : un `vercel --prod` a aussi été lancé par erreur précédemment, créant la prod URL `filanor-voice-2orm9ouah-fkuleshov01-cpus-projects.vercel.app` (2026-04-25). Décision = laisser intacte (cf. décisions ci-dessous).
+10. ✓ **Patch `next.config.ts`** : la clé `turbopack.root` (qui pointe sur la racine du monorepo pour faire taire le warning "inferred workspace root" en local) est désormais scopée à `process.env.NODE_ENV === "development"` uniquement. En build Vercel, la clé n'existe plus → cleanup, pas de bruit dans le tracing.
+11. ✓ **Désactivation Vercel SSO/Authentication** projet-wide via CLI :
+    ```
+    vercel project protection disable filanor-voice --sso
+    ```
+    Confirmation API : `ssoProtection: false`. Les URLs `*.vercel.app` deviennent publiquement accessibles sans login Vercel.
+12. ✓ **Re-deploy preview** → URL `https://filanor-voice-muv8tnbcd-fkuleshov01-cpus-projects.vercel.app` (status READY, build 18s, deploy total 29s, build cache hit depuis le précédent deploy).
+13. ✓ **Test publique end-to-end** : `curl -s -i -X POST` + `GET` sur `/api/retell/dynamic-variables` → **HTTP 200**, JSON valide avec champ `dynamic_variables` complet (Sophie, Hair In The City, services, praticiens, horaires, langues), routage edge `fra1`, build `iad1`. Réponse identique au local.
+14. ✓ Build logs propres confirmés via `vercel inspect --logs` : Next.js 16.2.4 (Turbopack), compile 5.0s, TypeScript 2.9s, 5 pages dont `ƒ /api/retell/dynamic-variables` (dynamique server-rendered on demand).
+15. ✓ Commit `feat: first working endpoint /api/retell/dynamic-variables` (sha `ebb18af`, 26 files, +4667 / -10) + push `origin master`.
+
+**Bonus admin (côté société, hors code)**
+
+- ✓ **KYC Twilio APPROVED 2026-04-25** — Bundle "Filanor Voice — CH Local Business", SID `BU8915423173a55add249d07b0c731e20a`. Soumission datait du 2026-04-25 (cf. JOURNAL 2026-04-25 §État administratif). Achat des numéros +41 désormais débloqué côté Twilio. Reste juste l'attente CB pro PostFinance (RDV mercredi 2026-04-29) avant de tirer Sophie + Marc. `docs/SETUP_ACCOUNTS.md` §1 mis à jour : status approved + bundle SID rempli.
+
+### Décisions prises (pas d'ADR — décisions ad hoc, réversibles)
+
+1. **Vercel SSO/Authentication désactivée sur le projet `filanor-voice` entier.** Pas d'ADR formelle car réversible en une commande CLI. Justification : Retell va bientôt hit le webhook `retrieve_dynamic_variables` via POST direct sans token Vercel — incompatible avec un mur d'auth Vercel. La sécurité de l'endpoint sera assurée plus tard par signature Retell (cf. `.claude/skills/api-routes/SKILL.md` §"Validation signature Retell") + RLS Supabase + Cloudflare WAF si nécessaire — **pas par Vercel auth**. Note de vigilance : quand on ajoutera un dashboard admin sur le même projet (`/admin`, `/internal`), il faudra le protéger uniquement au niveau route (Supabase Auth + middleware), pas re-protéger globalement le projet.
+
+2. **Production Vercel accidentelle (`filanor-voice-2orm9ouah`, déployée 2026-04-25) laissée intacte.** Pas de rollback / pas de delete. Justification : aucun trafic réel ne pointe dessus (le DNS `app.filanor.ch` n'existe pas encore, l'URL Vercel-générique n'est diffusée nulle part, aucune donnée client n'a transité, l'endpoint hardcoded ne fait que retourner des fixtures Sophie). Le prochain `--prod` se fera consciemment, post-Wire-DB + signature Retell + DPA signés.
+
+### Ce qui bloque / questions ouvertes
+
+- Aucun blocage technique. Étape 1-8 du plan 2026-04-25 livrée intégralement.
+- Endpoint hardcoded → pas connecté à Supabase (cible : session "Wire DB", après création agent Retell).
+- Pas de validation signature Retell sur l'endpoint (cible : session "Webhook hardening", après Wire DB).
+- DNS `app.filanor.ch` pas configuré chez Infomaniak (cible : session "Custom domain"). Pas bloquant tant que Retell hit l'URL Vercel-générique en webhook.
+- Compte personnel Vercel `fkuleshov01-cpus-projects` héberge le projet — migration vers Team Filanor (Vercel Pro 20 USD/mo) à planifier (cf. COSTS.md). Pas urgent au MVP mais avant de signer un client.
+- Production accidentelle Vercel : décidé de la laisser, à bien noter pour ne pas s'auto-tromper en se croyant déjà "en prod" — on n'y est PAS, c'est un fantôme.
+
+### Prochaine étape recommandée — Session 2 (à enchaîner immédiatement) : "First Retell Agent — Sophie Web Call"
+
+**Objectif unique** : créer le premier agent Retell "Sophie test" sur le template SALON, le connecter à l'endpoint Vercel preview existant via le webhook `retrieve_dynamic_variables`, et le faire **parler en Web Call** (depuis le dashboard Retell, pas via téléphone — KYC Twilio approved mais aucun numéro acheté tant que CB pro pas dispo).
+
+**Pré-requis manuel Filip (~5 min avant la session)**
+- Créer le compte Retell `contact@filanor.ch` si pas déjà fait (cf. SETUP_ACCOUNTS §5).
+- Créer le compte OpenAI Organization `Filanor Tech` (cf. SETUP_ACCOUNTS §6).
+- Avoir CB perso disponible pour pré-charges 20 USD Retell + 10 USD OpenAI.
+
+**Étapes ordonnées (≈80 min)**
+
+1. **Création compte Retell** (10 min) — cf. `docs/SETUP_ACCOUNTS.md` §5 : signup `contact@filanor.ch`, billing CB perso 20 USD pré-charge + auto-recharge, signer le DPA Retell.
+2. **Création compte OpenAI + ZDR** (10 min) — cf. `docs/SETUP_ACCOUNTS.md` §6 : Organization `Filanor Tech`, billing 10 USD pré-charge avec hard limit 20 USD/mo, **soumettre la demande ZDR** via help.openai.com (attente 24-72h — non bloquant pour le Web Call test, mais à valider AVANT toute donnée client réelle).
+3. **Stockage clés** (5 min) — `.env.local` racine du repo (créer depuis `.env.example` si absent) : `RETELL_API_KEY=`, `RETELL_WEBHOOK_SECRET=`, `OPENAI_API_KEY=`. Vérifier `.env.local` gitignored. Purger `C:\Filanor\credentials-temp.txt` si plus utilisé (cf. SETUP_ACCOUNTS §"Récap").
+4. **Compilation system prompt Sophie** (10 min) — via skill `.claude/skills/prompt-template/` : assembler `docs/PROMPTS/SYSTEM_PROMPT_UNIVERSAL.md` + `docs/PROMPTS/SECTOR_SALON.md` avec les variables Hair In The City courantes (mêmes valeurs que l'endpoint hardcoded). Output : prompt complet inline pour la création agent.
+5. **Création agent Retell `Sophie test`** (15 min) — via skill `.claude/skills/retell-config/` :
+   - Voice : ElevenLabs Charlotte (FR féminine multilingual) — défaut recommandé Retell
+   - Model : `gpt-4o-mini`
+   - Language : `multi` (FR + EN + DE — ADR-004)
+   - System prompt : sortie de l'étape 4
+   - **Webhook `retrieve_dynamic_variables`** : `https://filanor-voice-muv8tnbcd-fkuleshov01-cpus-projects.vercel.app/api/retell/dynamic-variables` (URL preview courante de cette session)
+   - `data_storage_setting: no_transcript_storage` (cf. nLPD)
+   - Sauvegarde de l'`agent_id` retourné dans `.env.local` : `RETELL_AGENT_ID_SALON=...`
+6. **Test Web Call** (15 min) — depuis le dashboard Retell, bouton "Test agent in browser". Scénarios à valider (cf. `docs/PROMPTS/TEST_SCENARIOS.md`) :
+   - Démarre l'appel avec le bon nom de salon ("Hair In The City", pas un placeholder `{{tenant_name}}`).
+   - Connaît les services et prix réels (45 CHF coupe femme, etc.).
+   - Reconnaît les 3 praticiens (Julie, Sarah, Amélie).
+   - Détecte la langue : test FR (default), test EN ("hello, do you speak English?"), test DE ("Grüezi, sprechen Sie Deutsch?").
+   - Vérifier que le webhook `retrieve_dynamic_variables` est bien hit dans les logs Vercel pendant le call.
+7. **Mesure latence réelle** (5 min) — noter latence audible avant la 1ère réponse (ANTI_PATTERNS §"Latence promise 600ms vs réalité 800ms"). Si > 1s, basculer voix ElevenLabs Flash v2.5.
+8. **Commit + push** (5 min) — `feat: first Retell agent Sophie test connected to dynamic-variables endpoint`. Note : le commit ne contient AUCUN secret (clés API restent dans `.env.local` gitignored), juste éventuellement la doc du skill `retell-config` si besoin.
+9. **MAJ JOURNAL.md** (5 min) — entrée Session 2.
+
+**Ce qu'on NE FAIT PAS dans la session 2**
+- Achat numéro Twilio +41 (en attente CB pro PostFinance — RDV 2026-04-29).
+- Connexion Supabase à l'endpoint (session "Wire DB", après).
+- Validation signature webhook Retell (session "Webhook hardening", après Wire DB).
+- Création agent Marc / template restaurant (après que Sophie est validée et latence mesurée).
+- DNS `app.filanor.ch` (session "Custom domain", après).
+- Migration vers Team Vercel Pro (cf. COSTS.md item).
+
+### Fichiers modifiés (cette tranche, à committer post-cette entrée)
+
+- `docs/SETUP_ACCOUNTS.md` — §1 Twilio status APPROVED + bundle SID, tableau "Ordre d'exécution" ligne 1 marquée "fait", checklist post-setup case Twilio Approved cochée
+- `docs/JOURNAL.md` — cette entrée
+
+### Fichiers déjà committés cette session (sha `ebb18af`)
+- `apps/web/next.config.ts` (turbopack scoped to dev)
+- `apps/web/app/api/retell/dynamic-variables/route.ts` (nouveau)
+- `apps/web/.gitignore`, `apps/web/AGENTS.md`, `apps/web/CLAUDE.md`, `apps/web/app/{layout.tsx,page.tsx,globals.css,favicon.ico}`, `apps/web/eslint.config.mjs`, `apps/web/package.json`, `apps/web/postcss.config.mjs`, `apps/web/public/{file,globe,next,vercel,window}.svg`, `apps/web/tsconfig.json`, `apps/web/README.md` (scaffold Next.js 16)
+- `pnpm-lock.yaml` (versionné)
+- `.nvmrc` (Node 20 → 20.18.0)
+- `CLAUDE.md`, `README.md`, `docs/STACK.md`, `docs/ARCHITECTURE.md`, `docs/COSTS.md` (Next.js 15 → 16, ajout note AGENTS.md, ajout ligne Vercel Pro Team prévu)
+
+### Anti-patterns ajoutés
+- Aucun pour cette session.
+
+### Décisions prises
+- Aucune ADR formelle. 2 décisions ad hoc documentées ci-dessus (Vercel SSO disabled, prod accidentelle laissée).
+
+---
