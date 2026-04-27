@@ -7,7 +7,7 @@
 | Runtime | Node.js | 20 LTS | free | |
 | Package manager | pnpm | 9.x | free | |
 | Language | TypeScript | 5.4+ | free | |
-| Front admin | Next.js | 15 (App Router) | free | |
+| Front admin | Next.js | 16 (App Router) | free | |
 | UI | Tailwind + shadcn/ui | latest | free | |
 | Animations | Framer Motion + GSAP | latest | free | |
 | DB | Supabase (Postgres 15) | hosted EU Frankfurt | Free tier → Pro $25/mo | supabase.com |
@@ -30,10 +30,12 @@
 
 - Node : 20 LTS (`.nvmrc`)
 - pnpm : 9.0.0 (via `packageManager` dans `package.json`)
-- Next : 15 (App Router, stable)
+- Next : 16 (App Router, stable)
 - React : 19
 - TypeScript : 5.4+
 - Supabase CLI : latest
+
+> Next 16 est livré avec un `AGENTS.md` officiel Vercel servant de référence pour les LLM (données d'entraînement souvent obsolètes vs API Next 16). Voir `apps/web/AGENTS.md` — à lire avant tout code Next.js.
 
 ## Plan 4 semaines (sprints jour/jour)
 

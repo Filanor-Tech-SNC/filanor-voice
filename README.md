@@ -20,7 +20,7 @@ pnpm dev
 filanor-voice/
 ├── CLAUDE.md              ← instructions Claude Code (à lire avant tout)
 ├── docs/                  ← décisions, archi, prompts, LPD, journal
-├── apps/web/              ← dashboard admin Next.js 15
+├── apps/web/              ← dashboard admin Next.js 16
 ├── packages/              ← libs partagées TypeScript
 ├── supabase/migrations/   ← schéma DB multi-tenant
 ├── scripts/               ← scripts CLI (provision-tenant, etc.)
@@ -35,7 +35,7 @@ filanor-voice/
 
 ## Stack
 
-Retell AI · Twilio · ElevenLabs · OpenAI GPT-4o mini · Supabase (Frankfurt) · Next.js 15 · Vercel.
+Retell AI · Twilio · ElevenLabs · OpenAI GPT-4o mini · Supabase (Frankfurt) · Next.js 16 · Vercel.
 
 Détails : `docs/STACK.md`.
 

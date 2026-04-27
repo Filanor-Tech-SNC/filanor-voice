@@ -183,7 +183,7 @@ Définies dans la config agent Retell. Signatures :
 
 ## Composants clés
 
-### `apps/web` (Next.js 15)
+### `apps/web` (Next.js 16)
 - Dashboard admin Filanor (Filip voit tous les tenants)
 - API routes pour Retell (`/api/retell/*`)
 - Landing publique `/voix` (page commerciale)

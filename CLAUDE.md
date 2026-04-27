@@ -64,7 +64,7 @@ Objectifs mesurables Filip :
 
 ## 5. Compétences de Filip (à supposer acquises)
 
-- Next.js 15 / React 19 / TypeScript : avancé
+- Next.js 16 / React 19 / TypeScript : avancé
 - Tailwind, Framer Motion, GSAP : avancé
 - Node.js, API REST, webhooks : correct
 - Supabase / Postgres : intermédiaire
@@ -82,7 +82,7 @@ Objectifs mesurables Filip :
 | LLM | OpenAI GPT-4o mini | Rapport qualité/prix sur du booking simple |
 | DB + Auth + Storage | Supabase (region Frankfurt EU) | Conforme nLPD, Postgres natif |
 | Orchestration | Next.js API routes + Vercel Cron | Inclus dans apps/web (ADR-010, ADR-013) |
-| Front admin | Next.js 15 + shadcn/ui | Maîtrisé, from scratch |
+| Front admin | Next.js 16 + shadcn/ui | Maîtrisé, from scratch |
 | Hébergement | Vercel | Déjà utilisé pour filanor.ch |
 | Langage | TypeScript partout | Pas de Python |
 

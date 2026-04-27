@@ -31,11 +31,12 @@ Statuts : `actif` (créé et payant) · `prévu` (à créer dans les jours à ve
 |---------|------|--------------|-------------|
 | Supabase | Pro | 25 USD (~22 CHF) | signature 1er pilote (ADR-012) |
 | Vercel | Hobby | 0 CHF | tant que suffisant |
+| Vercel Pro Team | Pro Team | 20 USD (~18 CHF) | créer Team Filanor, migrer `filanor` + `filanor-voice` depuis le compte perso `fkuleshov01-cp`, inviter Daniel |
 | Twilio | pay-as-you-go | 3-5 CHF | +1 numéro par client |
 | Retell | pay-as-you-go | 30-80 CHF | selon volume clients |
 | OpenAI | pay-as-you-go | 10-25 CHF | selon volume |
 
-**Burn rate phase 1 estimé : ~55-75 CHF/mois** (hors coût variable Retell/OpenAI/Twilio facturé au client via le pricing 199/349).
+**Burn rate phase 1 estimé : ~75-95 CHF/mois** (hors coût variable Retell/OpenAI/Twilio facturé au client via le pricing 199/349).
 
 ---
 

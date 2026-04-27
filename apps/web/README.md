@@ -1,6 +1,6 @@
 # apps/web — Dashboard admin Filanor
 
-Dashboard interne Next.js 15 où Filip/Daniel voient :
+Dashboard interne Next.js 16 où Filip/Daniel voient :
 - Liste des tenants (salons et restaurants clients)
 - Logs d'appels par tenant
 - Bookings créés
