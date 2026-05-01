@@ -328,3 +328,109 @@ Volontairement non bloquant. Mode opératoire change : on accélère vers du con
 - Aucune ADR formelle. 2 décisions ad hoc documentées ci-dessus (Vercel SSO disabled, prod accidentelle laissée).
 
 ---
+
+## 2026-05-01 · 14h00 · Filip + Claude (Opus 4.7) · Session Cal.com — Sophie booking réel end-to-end
+
+### Ce qui a été fait
+
+**Étape 0 — Test base URL Cal.com**
+- Cal.com instance EU confirmée : `https://api.cal.eu/v2` (api.cal.com retourne 401 sur cette clé, normal — clé liée à l'instance EU)
+- Versioning par endpoint identifié : `/v2/slots` requires `cal-api-version: 2024-09-04` ; `/v2/bookings` requires `2024-08-13`. POST /v2/bookings 404 en 2024-09-04 (piège facile).
+- Account `contact@filanor.ch` (id 97753) connecté, schedule `salon` Lun-Sam 9h-19h Europe/Zurich
+
+**Étape 1 — Client Cal.com TypeScript** (`apps/web/lib/calcom/`, 7 fichiers)
+- `client.ts` : getSlots, createBooking, classe `CalcomApiError.isSlotTaken()`, versioning per endpoint
+- `types.ts` : CalcomSlot, CalcomBookingResponse, Service union, PresentableSlot (PAS de champ stylist)
+- `mapping.ts` : `serviceToEventTypeId` lit env vars, throw si manquant. `serviceDurationMin`. Liste enum salon + resto.
+- `window-parser.ts` : `parseWindow` (français naturel → range ISO), `detectDaypart` (matin/aprem/soir/any)
+- `slot-picker.ts` : `pickRealisticSlots` fonction PURE — max 3, espacés ≥ 60 min, daypart-aware
+- `safety.ts` : `assertNoTemplatePlaceholders(payload, context)` — match `/\{\{[^}]+\}\}/`, log warn + throw, garde-fou anti-régression "tenant_name prononcé littéralement"
+- `datetime.ts` : `buildZurichIso` DST-aware (Intl longOffset), `frenchDateLong/Time`, `normalizePhone`
+- Aucun `any`, aucun import Next-spécifique (Web Request/Response natifs)
+
+**Étape 2 — Vitest minimal**
+- Vitest 3.2.4 retenu (Vitest 4.x cassé sur Windows par bug binding `@rolldown/binding-win32-x64-msvc` — anti-pattern à noter)
+- 12 tests dans `apps/web/lib/calcom/__tests__/` : slot-picker (7) + safety (5) — tous passent
+- `vitest.config.mts` (forcé ESM pour éviter `ERR_REQUIRE_ESM` avec Vite 7)
+- Scripts `pnpm test` + `pnpm test:watch` ajoutés
+
+**Étape 3 — Refactor `apps/web/app/api/retell/functions/check-availability/route.ts`**
+- Remplace le mock hardcoded par appel Cal.com réel
+- Suppression du hardcode lundi/mardi → [] (Cal.com gère naturellement les jours fermés)
+- `pickRealisticSlots` applique constraint A (max 3, espacés, daypart-aware)
+- `assertNoTemplatePlaceholders` sur tous les paths de retour (succès + fallback)
+
+**Étape 4 — Nouveau `apps/web/app/api/retell/functions/book-appointment/route.ts`**
+- Validation stricte 5 args (name, phone, slot_date YYYY-MM-DD, slot_time HH:MM, service enum salon)
+- Email factice `${normalizePhone(phone).slice(1)}@filanor-demo.ch`
+- start ISO 8601 avec offset Zurich DST-aware
+- Idempotence naturelle Cal.com : `CalcomApiError.isSlotTaken()` → `success:false, error:"slot_taken"`
+- `confirmation_message` FR sans mention SMS ni coiffeur (constraints A + B)
+
+**Étape 5 — Update Retell tools (`scripts/update-retell-agent-prompt.mjs`)**
+- 3e tool `book_appointment` ajouté (speak_during_execution: true)
+- Description durcie : "Ne jamais appeler 2× pour le même slot. Si slot_taken, relance check_availability sur la même fenêtre."
+- Sanity check #2 ajouté : asserte que `{{tenant_name}}`, `{{agent_persona}}`, `{{agent_gender}}`, `{{tenant_type}}` sont INTACTS dans le prompt envoyé à Retell (constraint C anti-interpolation Node-side)
+
+**Étape 6 — Update prompts**
+- UNIVERSAL.md étape 4 : sous-point book_appointment avec phrase "Je note ça pour vous, un instant"
+- UNIVERSAL.md étape 5 : conditionnelle 3 branches (success / slot_taken → relance / autre erreur → "on vous rappelle dans la journée")
+- Mentions "avec Sarah/Julie" retirées des exemples (constraint B — Cal.com Free single-user)
+- Mentions "SMS dans un instant" retirées (constraint A — Twilio SMS pas câblé)
+
+**Étape 7 — Vercel env + deploy**
+- Repo `Filanor-Tech-SNC/filanor-voice` passé public sur GitHub pour permettre la connexion Vercel Hobby (Hobby ne supporte pas les repos privés d'org). Migration vers Vercel Pro + repo privé prévue post-1er-pilote-payant. Aucun secret en clair dans le repo, `.env.local` toujours gitignored, historique Git vérifié propre.
+- 10 env vars Cal.com (CALCOM_API_KEY, CALCOM_BASE_URL, 8× CALCOM_EVENT_ID_*) poussées en `production` ET `preview` (preview scopée sur branche `dev` créée volontairement pour permettre le scope ; sans branche non-master, Vercel CLI rejette `vercel env add NAME preview` avec `git_branch_required`)
+- Root Directory du projet Vercel passé de `.` à `apps/web` côté dashboard (post-git-connect, Vercel essayait de build depuis racine sinon — 4 deploys ratés silencieusement avant détection via `vercel project inspect`)
+- Preview deploys via `vercel deploy --archive=tgz` depuis racine repo (le CLI combine cwd + Root Directory setting, donc lancer depuis `apps/web` avec Root Directory=`apps/web` cherche `apps/web/apps/web`)
+
+**Étape 8 — Tests E2E sur preview**
+- Test 1 : `check_availability window=samedi` → `[]` (Cal.com applique probable `minimumBookingNotice` excluant samedi proche de today)
+- Test 2-3-4 : `check_availability window=lundi / lundi+matin / lundi+apres-midi` → 3 slots filtrés via pickRealisticSlots, daypart-aware confirmé ✓
+- Test 5 : `book_appointment lundi 10h coupe-femme` → `success:true, booking_id:vv2AimTCZVbCAViPXj4Uv6` ✓ (booking visible Cal.com dashboard)
+- Test 6 : `book_appointment` même slot → `success:false, error:slot_taken` ✓ (idempotence)
+- Test 7 : autre slot déjà pris → `slot_taken` ✓
+
+**Étape 9 — Push Retell LLM**
+- LLM `llm_df2d5bb92f67b6b45f16122191b2` mis à jour : 3 tools (end_call + check_availability + book_appointment), prompt 11281 chars, `{{tenant_name}}` etc. intacts, gpt-4o-mini conservé
+
+### Ce qui bloque / questions ouvertes
+
+- Window "samedi" retourne `[]` car Cal.com applique vraisemblablement un `minimumBookingNotice` sur l'event coupe-femme. À confirmer côté Cal.com dashboard si c'est intentionnel.
+- Branche `dev` créée pour scoper les preview env vars Vercel. À conserver tant qu'on est sur Vercel Hobby.
+- 2 deployments Vercel "morts" laissés (deploy_failed avant fix Root Directory) — pas critique, juste du bruit dans la liste.
+- Marc (agent restaurant) toujours pas branché — session dédiée prévue (cf. prochaine étape).
+
+### Prochaine étape recommandée — Session Marc (clone rapide Sophie)
+
+1. Créer LLM Retell `Marc test` via POST `/v2/create-retell-llm` avec prompt SECTOR_RESTAURANT compilé
+2. Créer agent Retell `Marc - Trattoria Bellavita` avec voice_id ElevenLabs masculin FR (Antoine/Adam)
+3. Étendre `scripts/update-retell-agent-prompt.mjs` pour supporter `--sector=restaurant` (3 tools identiques mais enum service change : reservation-2/4/6/groupe-special, et description tools adaptée resto)
+4. Test Web Call Marc end-to-end (check_availability + book_appointment sur events Trattoria Bellavita)
+
+### Décisions prises (ad hoc, pas d'ADR formelle)
+1. Cal.com utilisé directement sans Supabase intermédiaire pour cette session démo. Wire Supabase prévu post-1er-pilote-payant.
+2. Repo GitHub passé public temporairement (Vercel Hobby ne supporte pas private repos d'org). Repassage privé après migration Vercel Pro.
+3. Branche `dev` ajoutée au repo pour permettre le scope preview env vars Vercel.
+4. Vitest 3.x retenu (4.x cassé par bug rolldown binding sur Windows).
+5. Versioning Cal.com par endpoint (`2024-09-04` pour /slots, `2024-08-13` pour /bookings) — figé dans `client.ts`.
+
+### Fichiers modifiés / créés
+- `docs/PROMPTS/SECTOR_SALON.md`, `docs/PROMPTS/SYSTEM_PROMPT_UNIVERSAL.md`
+- `apps/web/lib/calcom/{client,types,mapping,window-parser,slot-picker,safety,datetime}.ts`
+- `apps/web/lib/calcom/__tests__/{slot-picker,safety}.test.ts`
+- `apps/web/vitest.config.mts`
+- `apps/web/app/api/retell/functions/check-availability/route.ts` (refactor depuis mock)
+- `apps/web/app/api/retell/functions/book-appointment/route.ts` (nouveau)
+- `apps/web/package.json` (vitest devDep + scripts test/test:watch)
+- `pnpm-lock.yaml`
+- `scripts/update-retell-agent-prompt.mjs` (3e tool + sanity check #2 dynamic placeholders)
+- `scripts/create-retell-agent.mjs` (déjà créé S2, premier commit cette session)
+- `scripts/list-retell-voices.mjs` (idem)
+- `docs/JOURNAL.md` (cette entrée)
+
+### Anti-patterns ajoutés
+- "Vitest 4.x sur Windows : bug binding rolldown" (à ajouter dans ANTI_PATTERNS.md à la prochaine session si récurrent)
+- "Vercel Root Directory `.` post-git-connect en monorepo : deploys ratés silencieusement" (idem)
+
+---
