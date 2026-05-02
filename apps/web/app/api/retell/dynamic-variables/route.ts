@@ -1,16 +1,15 @@
-const DYNAMIC_VARIABLES = {
-  agent_persona: "Sophie",
-  agent_gender: "féminine",
-  tenant_name: "Hair In The City",
-  tenant_type: "salon de coiffure",
-  tenant_address: "Rue du Bourg 21, 1003 Lausanne",
-  language_default: "français",
-  opening_hours:
-    "Mardi à vendredi 9h-19h, samedi 9h-17h. Fermé dimanche et lundi.",
-  services:
-    "Coupe femme (45 CHF), coupe homme (30 CHF), balayage (120 CHF), couleur (80 CHF), brushing (35 CHF)",
-  praticiens_list: "Julie, Sarah, Amélie",
-} as const;
+// ⚠️ DEPRECATED — Cf. ADR-015 (2026-05-01).
+// Cet endpoint répondait à l'ancien webhook Retell `retrieve_dynamic_variables_url`,
+// retiré côté Retell. Le pattern moderne 2026 vit dans
+// /api/retell/inbound-webhook/route.ts (event:"call_inbound" + wrapper réponse
+// `{call_inbound:{dynamic_variables:...}}`).
+// Cette route est conservée pour rollback éventuel + compatibilité Web Calls
+// dashboard Retell qui peut consommer l'ancien shape via le panel Test Audio.
+// Multi-tenant Supabase : à câbler en S5+, tenant lookup actuellement hardcodé.
+
+import { HAIR_IN_THE_CITY } from "@/lib/tenants/hair-in-the-city";
+
+const DYNAMIC_VARIABLES = HAIR_IN_THE_CITY;
 
 function logHit(method: string, request: Request): void {
   console.log(

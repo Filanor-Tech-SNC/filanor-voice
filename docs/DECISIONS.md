@@ -297,6 +297,46 @@ quota supérieur (120 vs 100 min), intégration GCal + SMS bundled.
 
 ---
 
+## ADR-015 · Pattern Retell `call_inbound` webhook + SIP Trunking Twilio · accepted · 2026-05-01 · Filip
+
+**Contexte.** En session 2 (2026-04-27), l'agent Sophie a été configuré côté Retell avec un champ `retrieve_dynamic_variables_url` pointant vers `/api/retell/dynamic-variables`. Pour les Web Calls (panel Test Audio dashboard Retell), Filip remplit manuellement les dynamic_variables — donc le webhook n'est pas réellement consommé. Pour brancher le numéro Twilio `+41 21 539 13 91` acquis le 2026-05-01 et faire passer un VRAI appel téléphonique entrant, il faut le pattern d'injection runtime.
+
+Recherche menée (2026-05-01 via docs.retellai.com) confirme :
+1. Le champ `retrieve_dynamic_variables_url` a été retiré de l'API Retell.
+2. Le webhook moderne `call_inbound` est configuré sur le **PHONE NUMBER**, pas sur l'agent. Champ `inbound_webhook_url` set via `PATCH /update-phone-number/{phone_number}` ou directement à `POST /import-phone-number`.
+3. Le routing Twilio → Retell ne passe plus par la "Voice URL" classique du numéro mais par un **Elastic SIP Trunk** Twilio pointant sur `sip:sip.retellai.com`.
+
+**Décision.**
+1. Bascule sur le pattern Retell `call_inbound` webhook : nouveau endpoint `apps/web/app/api/retell/inbound-webhook/route.ts` qui consomme `{event:"call_inbound", call_inbound:{from_number, to_number, agent_id, ...}}` et répond `{call_inbound:{dynamic_variables:{...}}}`.
+2. Routing Twilio → Retell via Elastic SIP Trunking Twilio (Origination URI `sip:sip.retellai.com`) + `POST https://api.retellai.com/import-phone-number` côté Retell pour binder l'agent et l'inbound webhook au numéro.
+3. Tenant lookup keyed par `to_number` côté webhook ; hardcoded `+41 21 539 13 91 → HAIR_IN_THE_CITY` en MVP (cf. `apps/web/lib/tenants/hair-in-the-city.ts`). Multi-tenant Supabase prévu en S5+.
+
+**Justification.**
+- Pas d'alternative : le `retrieve_dynamic_variables_url` legacy retourne 404 / ne déclenche plus d'événement.
+- SIP Trunking est la seule voie officielle 2026 documentée pour brancher un numéro Twilio existant à un agent Retell. La voie alternative `POST /create-phone-number` (achat de numéro via Retell) est limitée US/CA, donc inutilisable pour la Suisse.
+- Webhook sur le PHONE NUMBER (pas l'agent) est le bon scope : un même agent template peut servir plusieurs numéros, chacun avec un `inbound_webhook_url` différent — alignement parfait avec ADR-003 (1 agent par secteur + dynamic variables par tenant).
+
+**Implémentation.**
+- `apps/web/lib/tenants/hair-in-the-city.ts` : config statique tenant (10 dynamic_variables), seule source de vérité.
+- `apps/web/lib/inbound/build-response.ts` : fonction pure `buildInboundResponse(body)` qui valide le payload Retell et retourne la réponse à émettre.
+- `apps/web/app/api/retell/inbound-webhook/route.ts` : POST handler Next.js qui invoque `buildInboundResponse`, log structuré, `assertNoTemplatePlaceholders` sur la réponse.
+- `apps/web/lib/inbound/__tests__/build-response.test.ts` : 7 tests Vitest (cas valide HitC + 6 cas d'erreurs + anti-placeholder).
+- `apps/web/app/api/retell/dynamic-variables/route.ts` : marqué `DEPRECATED`, conservé pour rollback + compatibilité Web Call dashboard. Réutilise `HAIR_IN_THE_CITY` du nouveau lib tenants.
+- `scripts/import-twilio-number.mjs` : `POST https://api.retellai.com/import-phone-number` avec `phone_number, termination_uri, inbound_agents:[{agent_id, weight:1}], inbound_webhook_url, sip_trunk_auth_*`.
+- Côté Twilio (manuel dashboard) : Elastic SIP Trunk créé, `+41 21 539 13 91` assigné au trunk (pas de Voice URL classique).
+- Validation signature `x-retell-signature` : reportée à la session "Webhook hardening" (cohérent avec dynamic-variables et Cal.com).
+
+**Conséquences.**
+- Branche le numéro Twilio acheté (premier appel téléphonique réel possible).
+- Une seule source de vérité de la config tenant (`lib/tenants/`) pour les 2 endpoints (legacy + moderne).
+- Préfigure le multi-tenant : le `TENANT_BY_NUMBER` deviendra un lookup Supabase en S5+, sans toucher au shape de réponse Retell.
+- L'ancienne route `/api/retell/dynamic-variables` reste accessible mais marquée DEPRECATED.
+- Dépendance opérationnelle : configurer un Elastic SIP Trunk côté Twilio est un setup manuel par tenant en MVP. Industrialisable plus tard (un seul SIP trunk partagé multi-numéros + `POST /import-phone-number` automatisé par tenant).
+
+**Plan B.** Si Retell change encore d'API ou si le SIP trunking pose problème, fallback documenté = `POST /v2/register-phone-call` (custom telephony dial-to-SIP). Évité tant que possible — pattern réservé aux IVR custom complexes.
+
+---
+
 ## Template pour les futures ADR
 
 ```
